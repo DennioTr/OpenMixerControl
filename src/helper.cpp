@@ -508,8 +508,6 @@ String Helper::MixerparameterCategoryToString(MP_CAT cat)
 			return "Ch Dynamics";
 		case CHANNEL_SENDS:
 			return "Ch Sends";
-		case FX:
-			return "FX";
 		case DISPLAY:
 			return "Display";
 		case DMX:

@@ -4,7 +4,6 @@
 #include "base.h"
 #include "spi.h"
 #include "fxmath.h"
-#include "fxslot.h"
 
 namespace OMC
 {
@@ -29,8 +28,6 @@ class DSP1 : X32Base {
 
         FxMath* fxmath;
         SPI* spi;
-
-        FxSlot* fx_slot[MAX_FX_SLOTS];
 
         DSP1(X32BaseParameter* basepar);
         void Init();
@@ -62,7 +59,7 @@ class DSP1 : X32Base {
         void UpdateVuMeter(uint8_t intervalMs);
         uint8_t GetPeak(int i, uint8_t steps);
 
-        void DSP2_SetFx(int fxSlot, FX_TYPE fxType, int mode);
+        void DSP2_SetFx(int fxSlot, enum FX_TYPE fxType, int mode);
         void DSP2_SendFxParameter(int fxSlot);
         void DSP2_SetOscillator(uint8_t oscIndex, float frequency, float volumedB);
         void DSP2_SendOscillatorValues();

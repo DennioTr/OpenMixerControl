@@ -49,6 +49,9 @@ namespace OMC
             OscSendToServerCallbackReset oscCallbackReset = nullptr;
             void* callbackArg = nullptr;
 
+            // FX Parameters
+            map<enum FX_TYPE, vector<MP_ID>> fx_parameters;            
+
             // old
             OMC_MODEL _model;
 
@@ -63,6 +66,8 @@ namespace OMC
             Mixerparameter* DefParameter(MP_ID mp_type, MP_CAT category, String name, uint count = 1);
             Mixerparameter* GetParameter(MP_ID mp);
 
+            void DefineFxParameters();
+
             map<String, MP_ID>* GetOscPaths();
             void SetCallbackSet(OscSendToServerCallbackSet callback, void* arg);
             void SetCallbackChange(OscSendToServerCallbackChange callback, void* arg);
@@ -74,6 +79,7 @@ namespace OMC
             void SetParameterChanged(MP_ID mp, uint index);
             map<MP_ID, set<uint>>* GetChangedParameterList();
             vector<uint> GetChangedParameterIndexes(MP_CAT parameter_cat);
+            vector<uint> GetChangedParameterIndexes(vector<MP_CAT> parameter_cats);
             vector<uint> GetChangedParameterIndexes(vector<MP_ID> filter_ids);
             bool HasParameterChanged(MP_ID parameter_id);
             bool HasParameterChanged(MP_ID parameter_id, uint index);
@@ -106,6 +112,9 @@ namespace OMC
             uint ParameterCalcIndex(SurfaceBindingParameter* binding_parameter);
             MP_ID ParameterDependsOn(SurfaceBindingParameter* binding_parameter);
             MP_ID ParameterDependsOn(MixerparameterAction mp_action);
+
+            int GetFxParameterCountFromType(enum FX_TYPE fxType);
+            MP_ID GetFxParameterFromType(enum FX_TYPE fxType, uint parameterIndex);
 
             void DefineSurfaceElements();
             SurfaceElement* DefSurfaceElements(SurfaceElementId element_id, String name);

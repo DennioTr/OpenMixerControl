@@ -40,6 +40,7 @@ namespace OMC
         {
             case TAPPOINT:
             case EQ_TYPE:
+            case FX_TYPE:
             case FPGA_ROUTING:
             case DSP_ROUTING:
             case CHANNEL_LCD_MODE:
@@ -158,6 +159,46 @@ namespace OMC
                     default:
                         result += "???";
                         break;
+                }
+                break;
+            case FX_TYPE:
+                {
+                    switch ((uint) (isResetLabel ? value_standard : value[index]))
+                    {
+                        case (uint)FX_TYPE::NONE:
+                            result += "None";
+                            break;
+                        case (uint)FX_TYPE::REVERB:
+                            result += "Reverb";
+                            break;
+                        case (uint)FX_TYPE::CHORUS:
+                            result += "Chorus";
+                            break;
+                        case (uint)FX_TYPE::TRANSIENTSHAPER:
+                            result += "Transientshaper";
+                            break;
+                        case (uint)FX_TYPE::OVERDRIVE:
+                            result += "Overdrive";
+                            break;
+                        case (uint)FX_TYPE::DELAY:
+                            result += "Delay";
+                            break;
+                        case (uint)FX_TYPE::MULTIBANDCOMPRESOR:
+                            result += "Multibandcompressor";
+                            break;
+                        case (uint)FX_TYPE::DYNAMICEQ:
+                            result += "Dynamic EQ";
+                            break;
+                        case (uint)FX_TYPE::DEFEEDBACK:
+                            result += "DeFeedBack";
+                            break;
+                        case (uint)FX_TYPE::MATRIXUPMIXER:
+                            result += "Matrix Upmixer";
+                            break;
+                        default:
+                            result += String("Unknown FX: ") + String(value[index]);
+                            break;
+                    }
                 }
                 break;
             case FPGA_ROUTING:

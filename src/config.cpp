@@ -58,6 +58,7 @@ namespace OMC
 
         DefineMixerparameters();
         DefineSurfaceElements();
+        DefineFxParameters();
         InitAssignBanks();
     }
 
@@ -806,7 +807,14 @@ namespace OMC
         // ###########
         cat = MP_CAT::FX;
 
+        // global
+
+        DefParameter(FX_TYPE, cat, "FX Type", MAX_FX_SLOTS)
+        ->DefMinMaxStandard_Uint((uint)FX_TYPE::NONE, (uint)FX_TYPE::__ELEMENT_COUNTER_DO_NOT_MOVE, (uint)FX_TYPE::NONE);
+
+
         // reverb
+        cat = MP_CAT::FX_PARAMETER_REVERB;
 
         #define FX_REVERB_ROOMSIZE_MIN         0.0f // ms
         #define FX_REVERB_ROOMSIZE_DEFAULT   150.0f // ms
@@ -847,6 +855,8 @@ namespace OMC
         ->DefMinMaxStandard_Float(FX_REVERB_WET_MIN, FX_REVERB_WET_MAX, FX_REVERB_WET_DEFAULT);
 
         // chorus
+        cat = MP_CAT::FX_PARAMETER_CHORUS;
+
         #define FX_CHORUS_DEPTH_A_MIN          0.0f //
         #define FX_CHORUS_DEPTH_A_DEFAULT     10.0f //
         #define FX_CHORUS_DEPTH_A_MAX        100.0f //
@@ -916,6 +926,7 @@ namespace OMC
         ->DefMinMaxStandard_Float(0.0f, 1.0f, 0.5f);
 
         // transientshaper
+        cat = MP_CAT::FX_PARAMETER_TRANSIENTSHAPER;
 
         // fast
         DefParameter(FX_TRANSIENTSHAPER_FAST, cat, "Fast", MAX_FX_SLOTS)
@@ -950,6 +961,7 @@ namespace OMC
         ->DefMinMaxStandard_Float(0.0f, 1000.0f, 1.0f);
 
         // FX_TYPE_OVERDRIVE
+        cat = MP_CAT::FX_PARAMETER_OVERDRIVE;
 
         DefParameter(FX_OVERDRIVE_PREGAIN, cat, "PreGain", MAX_FX_SLOTS)
         ->DefUOM(MP_UOM::DB)
@@ -979,6 +991,7 @@ namespace OMC
         ->DefMinMaxStandard_Float(20.0f, 24000.0f, 10000.0f);
 
         // delay A/B
+        cat = MP_CAT::FX_PARAMETER_DELAY;
 
         DefParameter(FX_DELAY_DELAY_A, cat, "Delay A", MAX_FX_SLOTS)
         ->DefUOM(MP_UOM::MS)
@@ -989,6 +1002,7 @@ namespace OMC
         ->DefMinMaxStandard_Float(0.0f, 1000.0f, 450.0f);
 
         // FX_TYPE_MULTIBANDCOMPRESOR   channel band threshold ratio attack  hold   release   makeup
+        cat = MP_CAT::FX_PARAMETER_MULTIBANDCOMPRESOR;
 
         DefParameter(FX_MULTIBANDCOMPRESOR_L_FREQ1, cat, "[1L] Frequency", MAX_FX_SLOTS)
         ->DefUOM(MP_UOM::HZ)
@@ -1281,6 +1295,7 @@ namespace OMC
         ->DefMinMaxStandard_Float(0.0f, 24.0f, 0.0f, 1);
 
         // FX_TYPE_DYNAMICEQ            band type freq staticGain  maxDynGain  Q  thresh  ratio  attack  release
+        cat = MP_CAT::FX_PARAMETER_DYNAMICEQ;
 
         DefParameter(FX_DYNAMICEQ_BAND1_TYPE, cat, "[1] Type", MAX_FX_SLOTS)
         ->DefUOM(MP_UOM::EQ_TYPE)
@@ -1484,6 +1499,20 @@ namespace OMC
     MP_ID Config::MpCalcId(MP_ID mp_id, int amount)
     {
         return (MP_ID)(((uint)mp_id) + amount);
+    }
+
+    vector<uint> Config::GetChangedParameterIndexes(vector<MP_CAT> parameter_cats)
+    {
+        vector<uint> changedIndexes;
+
+        for (MP_CAT const& cat : parameter_cats)
+        {
+            vector<uint> ret = GetChangedParameterIndexes(cat);
+
+            changedIndexes.insert(changedIndexes.end(), ret.begin(), ret.end());
+        }
+
+        return changedIndexes;
     }
 
     vector<uint> Config::GetChangedParameterIndexes(MP_CAT parameter_cat)
@@ -1924,6 +1953,173 @@ namespace OMC
             default:
                 return NONE;
         }
+    }
+
+    void Config::DefineFxParameters()
+    {
+        fx_parameters[FX_TYPE::REVERB].push_back(MP_ID::FX_REVERB_ROOMSIZE);
+        fx_parameters[FX_TYPE::REVERB].push_back(MP_ID::FX_REVERB_RT60);
+        fx_parameters[FX_TYPE::REVERB].push_back(MP_ID::FX_REVERB_LPFREQ);
+        fx_parameters[FX_TYPE::REVERB].push_back(MP_ID::FX_REVERB_DRY);
+        fx_parameters[FX_TYPE::REVERB].push_back(MP_ID::FX_REVERB_WET);
+
+
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_DEPTH_A);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_DELAY_A);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_PHASE_A);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_FREQ_A);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_DEPTH_B);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_DELAY_B);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_PHASE_B);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_FREQ_B);
+        fx_parameters[FX_TYPE::CHORUS].push_back(FX_CHORUS_MIX);
+
+
+        fx_parameters[FX_TYPE::DELAY].push_back(FX_DELAY_DELAY_A);
+        fx_parameters[FX_TYPE::DELAY].push_back(FX_DELAY_DELAY_B);
+
+
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_TYPE);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_FREQ);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_STATICGAIN);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_MAXDYNGAIN);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_Q);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_THRESHOLD);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_RATIO);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_ATTACK);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND1_RELEASE);
+    
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_TYPE);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_FREQ);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_STATICGAIN);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_MAXDYNGAIN);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_Q);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_THRESHOLD);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_RATIO);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_ATTACK);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND2_RELEASE);
+
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_TYPE);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_FREQ);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_STATICGAIN);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_MAXDYNGAIN);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_Q);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_THRESHOLD);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_RATIO);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_ATTACK);
+        fx_parameters[FX_TYPE::DYNAMICEQ].push_back(MP_ID::FX_DYNAMICEQ_BAND3_RELEASE);
+
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_FREQ1);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_FREQ2);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_FREQ3);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_FREQ4);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND1_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND1_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND1_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND1_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND1_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND1_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND2_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND2_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND2_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND2_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND2_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND2_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND3_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND3_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND3_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND3_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND3_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND3_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND4_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND4_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND4_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND4_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND4_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND4_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND5_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND5_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND5_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND5_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND5_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_L_BAND5_MAKEUP);
+        
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_FREQ1);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_FREQ2);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_FREQ3);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_FREQ4);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND1_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND1_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND1_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND1_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND1_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND1_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND2_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND2_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND2_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND2_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND2_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND2_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND3_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND3_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND3_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND3_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND3_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND3_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND4_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND4_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND4_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND4_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND4_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND4_MAKEUP);
+
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND5_THRESHOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND5_RATIO);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND5_ATTACK);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND5_HOLD);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND5_RELEASE);
+        fx_parameters[FX_TYPE::MULTIBANDCOMPRESOR].push_back(MP_ID::FX_MULTIBANDCOMPRESOR_R_BAND5_MAKEUP);
+
+
+        fx_parameters[FX_TYPE::OVERDRIVE].push_back(MP_ID::FX_OVERDRIVE_PREGAIN);
+        fx_parameters[FX_TYPE::OVERDRIVE].push_back(MP_ID::FX_OVERDRIVE_Q);
+        fx_parameters[FX_TYPE::OVERDRIVE].push_back(MP_ID::FX_OVERDRIVE_BIAS);
+        fx_parameters[FX_TYPE::OVERDRIVE].push_back(MP_ID::FX_OVERDRIVE_HPF_INPUTFREQ);
+        fx_parameters[FX_TYPE::OVERDRIVE].push_back(MP_ID::FX_OVERDRIVE_LPF_INPUTFREQ);
+        fx_parameters[FX_TYPE::OVERDRIVE].push_back(MP_ID::FX_OVERDRIVE_LPF_OUTPUTFREQ);
+
+
+        fx_parameters[FX_TYPE::TRANSIENTSHAPER].push_back(MP_ID::FX_TRANSIENTSHAPER_FAST);
+        fx_parameters[FX_TYPE::TRANSIENTSHAPER].push_back(MP_ID::FX_TRANSIENTSHAPER_MEDIUM);
+        fx_parameters[FX_TYPE::TRANSIENTSHAPER].push_back(MP_ID::FX_TRANSIENTSHAPER_SLOW);
+        fx_parameters[FX_TYPE::TRANSIENTSHAPER].push_back(MP_ID::FX_TRANSIENTSHAPER_ATTACK);
+        fx_parameters[FX_TYPE::TRANSIENTSHAPER].push_back(MP_ID::FX_TRANSIENTSHAPER_SUSTAIN);
+        fx_parameters[FX_TYPE::TRANSIENTSHAPER].push_back(MP_ID::FX_TRANSIENTSHAPER_DELAY);
+    }
+
+    int Config::GetFxParameterCountFromType(enum FX_TYPE fxType)
+    {
+        return fx_parameters[fxType].size();
+    }
+
+    MP_ID Config::GetFxParameterFromType(enum FX_TYPE fxType, uint parameterIndex)
+    {
+        if (parameterIndex >= GetFxParameterCountFromType(fxType))
+        {
+            return MP_ID::NONE;
+        }
+
+        return fx_parameters[fxType][parameterIndex];
     }
 
     //#############################################################################################################################################

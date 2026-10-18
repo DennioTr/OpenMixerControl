@@ -431,16 +431,31 @@ void Mixer::Sync()
         }
     }   
 
-    // FX Parameter
-    if (config->HasParametersChanged(MP_CAT::FX))
+    // FX Settings
+    if (config->HasParameterChanged(FX_TYPE))
     {
-        // TODO: changedIndexes != fxindex -> rethink all of that
-        // https://github.com/OpenMixerProject/OpenMixerControl/issues/88
-        vector<uint> changedIndexes = config->GetChangedParameterIndexes(MP_CAT::FX);
-        for (auto const& fxSlot : changedIndexes)
+        vector<uint> changedIndexes = config->GetChangedParameterIndexes({FX_TYPE});
+        for (auto const& changedIndex : changedIndexes)
         {
-            dsp->DSP2_SendFxParameter(fxSlot);
+            // TODO: Select mode!
+            dsp->DSP2_SetFx(changedIndex, (enum FX_TYPE)config->GetUint(FX_TYPE, changedIndex), 0);
         }
+    }
+
+    // FX Parameter
+    vector<MP_CAT> filter_cat = {
+        MP_CAT::FX_PARAMETER_REVERB,
+        MP_CAT::FX_PARAMETER_CHORUS,
+        MP_CAT::FX_PARAMETER_DELAY,
+        MP_CAT::FX_PARAMETER_TRANSIENTSHAPER,
+        MP_CAT::FX_PARAMETER_OVERDRIVE,
+        MP_CAT::FX_PARAMETER_MULTIBANDCOMPRESOR,
+        MP_CAT::FX_PARAMETER_DYNAMICEQ
+    };
+    vector<uint> changedIndexes = config->GetChangedParameterIndexes(filter_cat);
+    for (auto const& fxSlot : changedIndexes)
+    {
+        dsp->DSP2_SendFxParameter(fxSlot);
     }
 
     // CLEAR SOLO

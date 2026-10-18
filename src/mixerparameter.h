@@ -755,7 +755,14 @@ class Mixerparameter
 
         bool BelongsToFX()
         {
-            return category == MP_CAT::FX;
+            return
+                category == MP_CAT::FX_PARAMETER_CHORUS ||
+                category == MP_CAT::FX_PARAMETER_DELAY ||
+                category == MP_CAT::FX_PARAMETER_DYNAMICEQ ||
+                category == MP_CAT::FX_PARAMETER_MULTIBANDCOMPRESOR ||
+                category == MP_CAT::FX_PARAMETER_OVERDRIVE ||
+                category == MP_CAT::FX_PARAMETER_REVERB ||
+                category == MP_CAT::FX_PARAMETER_TRANSIENTSHAPER;
         }
 
         MixerparameterAction GetPreferredAction()

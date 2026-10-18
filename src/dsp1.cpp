@@ -42,9 +42,6 @@ DSP1::DSP1(X32BaseParameter* basepar) : X32Base(basepar)
     }
     
     fxmath = new FxMath(basepar);
-    for (uint8_t i = 0; i < MAX_FX_SLOTS; i++){
-        fx_slot[i] = new FxSlot(basepar);
-    }
 };
 
 void DSP1::Init()
@@ -840,11 +837,9 @@ void DSP1::UpdateVuMeter(uint8_t intervalMs)
 //#################################################
 
 
-void DSP1::DSP2_SetFx(int fxSlot, FX_TYPE fxType, int mode)
+void DSP1::DSP2_SetFx(int fxSlot, enum FX_TYPE fxType, int mode)
 {
     helper->DEBUG_DSP2(DEBUGLEVEL_NORMAL, "DSP2_SetFx() fxslot %d type %d mode %d", fxSlot, int(fxType), mode);
-
-    fx_slot[fxSlot]->LoadFx(fxType);
 
     int values[2];
     values[0] = (int)fxType; // type of the Effect
@@ -856,7 +851,10 @@ void DSP1::DSP2_SetFx(int fxSlot, FX_TYPE fxType, int mode)
 
 void DSP1::DSP2_SendFxParameter(int slotIdx)
 {
-    if (slotIdx > MAX_FX_SLOTS-1 || !fx_slot[slotIdx]->HasFx()) {
+    enum FX_TYPE fxType = (enum FX_TYPE)config->GetUint(FX_TYPE, slotIdx);
+
+    if (slotIdx > MAX_FX_SLOTS-1 || fxType == FX_TYPE::NONE)
+    {
         return;
     }
 
@@ -870,62 +868,60 @@ void DSP1::DSP2_SendFxParameter(int slotIdx)
     float phase[2];
     float freq[4];
 
-    FxBase* fx = fx_slot[slotIdx]->fx;
-
-    switch(fx_slot[slotIdx]->fxType)
+    switch(fxType)
     {
         case FX_TYPE::REVERB:
-            fxmath->fxCalcParameters_Reverb(&values[0], 
-                config->GetFloat(fx->GetParameterDefinition(0), slotIdx), // roomSizeMs
-                config->GetFloat(fx->GetParameterDefinition(1), slotIdx), // rt60
-                config->GetFloat(fx->GetParameterDefinition(2), slotIdx), // lpfFreq
-                config->GetFloat(fx->GetParameterDefinition(3), slotIdx), // dry
-                config->GetFloat(fx->GetParameterDefinition(4), slotIdx)  // wet
+            fxmath->fxCalcParameters_Reverb(&values[0],
+                config->GetFloat(config->GetFxParameterFromType(fxType, 0), slotIdx), // roomSizeMs
+                config->GetFloat(config->GetFxParameterFromType(fxType, 1), slotIdx), // rt60
+                config->GetFloat(config->GetFxParameterFromType(fxType, 2), slotIdx), // lpfFreq
+                config->GetFloat(config->GetFxParameterFromType(fxType, 3), slotIdx), // dry
+                config->GetFloat(config->GetFxParameterFromType(fxType, 4), slotIdx)  // wet
             );
             valueCount = 6;
             spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
             break;
         case FX_TYPE::CHORUS:
-            depth[0] = config->GetFloat(fx->GetParameterDefinition(0), slotIdx);
-            delayMs[0] = config->GetFloat(fx->GetParameterDefinition(1), slotIdx);
-            phase[0] = config->GetFloat(fx->GetParameterDefinition(2), slotIdx);
-            freq[0] = config->GetFloat(fx->GetParameterDefinition(3), slotIdx);
-            depth[1] = config->GetFloat(fx->GetParameterDefinition(4), slotIdx);
-            delayMs[1] = config->GetFloat(fx->GetParameterDefinition(5), slotIdx);
-            phase[1] = config->GetFloat(fx->GetParameterDefinition(6), slotIdx);
-            freq[1] = config->GetFloat(fx->GetParameterDefinition(7), slotIdx);
+            depth[0] = config->GetFloat(config->GetFxParameterFromType(fxType, 0), slotIdx);
+            delayMs[0] = config->GetFloat(config->GetFxParameterFromType(fxType, 1), slotIdx);
+            phase[0] = config->GetFloat(config->GetFxParameterFromType(fxType, 2), slotIdx);
+            freq[0] = config->GetFloat(config->GetFxParameterFromType(fxType, 3), slotIdx);
+            depth[1] = config->GetFloat(config->GetFxParameterFromType(fxType, 4), slotIdx);
+            delayMs[1] = config->GetFloat(config->GetFxParameterFromType(fxType, 5), slotIdx);
+            phase[1] = config->GetFloat(config->GetFxParameterFromType(fxType, 6), slotIdx);
+            freq[1] = config->GetFloat(config->GetFxParameterFromType(fxType, 7), slotIdx);
             
-            fxmath->fxCalcParameters_Chorus(&values[0], depth, delayMs, phase, freq, config->GetFloat(fx->GetParameterDefinition(8), slotIdx));
+            fxmath->fxCalcParameters_Chorus(&values[0], depth, delayMs, phase, freq, config->GetFloat(config->GetFxParameterFromType(fxType, 8), slotIdx));
             valueCount = 9;
             spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
             break;
         case FX_TYPE::TRANSIENTSHAPER:
             fxmath->fxCalcParameters_TransientShaper(&values[0],
-                config->GetFloat(fx->GetParameterDefinition(0), slotIdx), // tFastMs
-                config->GetFloat(fx->GetParameterDefinition(1), slotIdx), // tMediumMs
-                config->GetFloat(fx->GetParameterDefinition(2), slotIdx), // tSlowMs
-                config->GetFloat(fx->GetParameterDefinition(3), slotIdx), // attack
-                config->GetFloat(fx->GetParameterDefinition(4), slotIdx), // sustain
-                config->GetFloat(fx->GetParameterDefinition(5), slotIdx)  // delayMs
+                config->GetFloat(config->GetFxParameterFromType(fxType, 0), slotIdx), // tFastMs
+                config->GetFloat(config->GetFxParameterFromType(fxType, 1), slotIdx), // tMediumMs
+                config->GetFloat(config->GetFxParameterFromType(fxType, 2), slotIdx), // tSlowMs
+                config->GetFloat(config->GetFxParameterFromType(fxType, 3), slotIdx), // attack
+                config->GetFloat(config->GetFxParameterFromType(fxType, 4), slotIdx), // sustain
+                config->GetFloat(config->GetFxParameterFromType(fxType, 5), slotIdx)  // delayMs
                 );
             valueCount = 6;
             spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
             break;
         case FX_TYPE::OVERDRIVE:
             fxmath->fxCalcParameters_Overdrive(&values[0],
-                config->GetFloat(fx->GetParameterDefinition(0), slotIdx), // preGain
-                config->GetFloat(fx->GetParameterDefinition(1), slotIdx), // Q
-                config->GetFloat(fx->GetParameterDefinition(2), slotIdx), // Bias
-                config->GetFloat(fx->GetParameterDefinition(3), slotIdx), // hpfInputFreq
-                config->GetFloat(fx->GetParameterDefinition(4), slotIdx), // lpfInputFreq
-                config->GetFloat(fx->GetParameterDefinition(5), slotIdx)  // lpfOutputFreq
+                config->GetFloat(config->GetFxParameterFromType(fxType, 0), slotIdx), // preGain
+                config->GetFloat(config->GetFxParameterFromType(fxType, 1), slotIdx), // Q
+                config->GetFloat(config->GetFxParameterFromType(fxType, 2), slotIdx), // Bias
+                config->GetFloat(config->GetFxParameterFromType(fxType, 3), slotIdx), // hpfInputFreq
+                config->GetFloat(config->GetFxParameterFromType(fxType, 4), slotIdx), // lpfInputFreq
+                config->GetFloat(config->GetFxParameterFromType(fxType, 5), slotIdx)  // lpfOutputFreq
             );
             valueCount = 6;
             spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
             break;
         case FX_TYPE::DELAY:
-            delayMs[0] = config->GetFloat(fx->GetParameterDefinition(0), slotIdx);
-            delayMs[1] = config->GetFloat(fx->GetParameterDefinition(1), slotIdx);
+            delayMs[0] = config->GetFloat(config->GetFxParameterFromType(fxType, 0), slotIdx);
+            delayMs[1] = config->GetFloat(config->GetFxParameterFromType(fxType, 1), slotIdx);
             fxmath->fxCalcParameters_Delay(&values[0], delayMs);
             valueCount = 2;
             spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
@@ -934,22 +930,22 @@ void DSP1::DSP2_SendFxParameter(int slotIdx)
             // first send parameters for all channels and all bands
             for (int c = 0; c < 2; c++) {
                 // now prepare the frequencies for both channels
-                freq[0] = config->GetFloat(fx->GetParameterDefinition(34 * c + 0), slotIdx);
-                freq[1] = config->GetFloat(fx->GetParameterDefinition(34 * c + 1), slotIdx);
-                freq[2] = config->GetFloat(fx->GetParameterDefinition(34 * c + 2), slotIdx);
-                freq[3] = config->GetFloat(fx->GetParameterDefinition(34 * c + 3), slotIdx);
+                freq[0] = config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 0), slotIdx);
+                freq[1] = config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 1), slotIdx);
+                freq[2] = config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 2), slotIdx);
+                freq[3] = config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 3), slotIdx);
                 fxmath->fxCalcParameters_MultibandCompressorFreq(&values[0], c, freq);
                 valueCount = 41;
                 spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
 
                 for (int band = 0; band < 5; band++) {
                     fxmath->fxCalcParameters_MultibandCompressor(&values[0], c, band, 
-                        config->GetFloat(fx->GetParameterDefinition(34 * c + 4 + band * 6), slotIdx), // threshold
-                        config->GetFloat(fx->GetParameterDefinition(34 * c + 5 + band * 6), slotIdx), // ratio
-                        config->GetFloat(fx->GetParameterDefinition(34 * c + 6 + band * 6), slotIdx), // attack
-                        config->GetFloat(fx->GetParameterDefinition(34 * c + 7 + band * 6), slotIdx), // hold
-                        config->GetFloat(fx->GetParameterDefinition(34 * c + 8 + band * 6), slotIdx), // release
-                        config->GetFloat(fx->GetParameterDefinition(34 * c + 9 + band * 6), slotIdx)  // makeup
+                        config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 4 + band * 6), slotIdx), // threshold
+                        config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 5 + band * 6), slotIdx), // ratio
+                        config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 6 + band * 6), slotIdx), // attack
+                        config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 7 + band * 6), slotIdx), // hold
+                        config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 8 + band * 6), slotIdx), // release
+                        config->GetFloat(config->GetFxParameterFromType(fxType, 34 * c + 9 + band * 6), slotIdx)  // makeup
                     );
                     valueCount = 8;
                     spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);
@@ -960,15 +956,15 @@ void DSP1::DSP2_SendFxParameter(int slotIdx)
         case FX_TYPE::DYNAMICEQ: //                       band type  freq   staticGain  maxDynGain  Q  thresh  ratio  attack  release
             for (int band = 0; band < 3; band++) {
                 fxmath->fxCalcParameters_DynamicEQ(&values[0], band,
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 0), slotIdx), // type
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 1), slotIdx), // freq
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 2), slotIdx), // staticGain
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 3), slotIdx), // maxDynGain
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 4), slotIdx), // Q
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 5), slotIdx), // threshold
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 6), slotIdx), // ratio
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 7), slotIdx), // attack
-                    config->GetFloat(fx->GetParameterDefinition(9 * band + 8), slotIdx)  // release
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 0), slotIdx), // type
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 1), slotIdx), // freq
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 2), slotIdx), // staticGain
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 3), slotIdx), // maxDynGain
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 4), slotIdx), // Q
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 5), slotIdx), // threshold
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 6), slotIdx), // ratio
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 7), slotIdx), // attack
+                    config->GetFloat(config->GetFxParameterFromType(fxType, 9 * band + 8), slotIdx)  // release
                 );
                 valueCount = 11;
                 spi->QueueDspData(1, 'f', 'c', slotIdx, valueCount, values);

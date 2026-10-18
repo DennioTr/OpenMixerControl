@@ -110,6 +110,7 @@ enum class MP_UOM {
     HZ, // Hertz
     PERCENT, // Percent
     EQ_TYPE,
+    FX_TYPE,
     FPGA_ROUTING,
     DSP_ROUTING,
     TAPPOINT,
@@ -146,6 +147,13 @@ enum class MP_CAT
     CHANNEL_SENDS,
     CHANNEL_METER,
     FX,
+    FX_PARAMETER_REVERB,
+    FX_PARAMETER_CHORUS,
+    FX_PARAMETER_DELAY,
+    FX_PARAMETER_TRANSIENTSHAPER,
+    FX_PARAMETER_OVERDRIVE,
+    FX_PARAMETER_MULTIBANDCOMPRESOR,
+    FX_PARAMETER_DYNAMICEQ,
     DISPLAY,
     DMX,
 
@@ -345,6 +353,8 @@ enum class MP_ID {
     SUB_METER_DECAYED_POST_GAIN,
 
     // FX
+
+    FX_TYPE,
 
     FX_REVERB_ROOMSIZE,
     FX_REVERB_RT60,
@@ -1063,17 +1073,18 @@ enum class EQ_TYPE : int
 };
 
 enum class FX_TYPE : int {
-    NONE = -1,
-    REVERB = 0,
-    CHORUS = 1,
-    TRANSIENTSHAPER = 2,
-    OVERDRIVE = 3,
-    DELAY = 4,
-    MULTIBANDCOMPRESOR = 5,
-    DYNAMICEQ = 6,
-    DEFEEDBACK = 7,
-    MATRIXUPMIXER = 8,
-    FX_COUNT = 9
+    NONE = 0,
+    REVERB = 1,
+    CHORUS = 2,
+    TRANSIENTSHAPER = 3,
+    OVERDRIVE = 4,
+    DELAY = 5,
+    MULTIBANDCOMPRESOR = 6,
+    DYNAMICEQ = 7,
+    DEFEEDBACK = 8,
+    MATRIXUPMIXER = 9,
+
+    __ELEMENT_COUNTER_DO_NOT_MOVE
 };
 
 enum class X32_COLOR : int {
