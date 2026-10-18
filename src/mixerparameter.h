@@ -330,6 +330,7 @@ class Mixerparameter
             return this;
         }
 
+        // Mixerparameter is only used for the Client (don't need to be transmitted via OSC)
         Mixerparameter* DefClientParameter()
         {
             clientParameter = true;
