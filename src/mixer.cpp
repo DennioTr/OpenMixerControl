@@ -438,7 +438,7 @@ void Mixer::Sync()
         for (auto const& changedIndex : changedIndexes)
         {
             // TODO: Select mode!
-            dsp->DSP2_SetFx(changedIndex, (enum FX_TYPE)config->GetUint(FX_TYPE, changedIndex), 0);
+            dsp->DSP2_SetFx(changedIndex, (enum FX_TYPE)config->GetUint(FX_TYPE, changedIndex), 2);
         }
     }
 

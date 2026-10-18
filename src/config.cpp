@@ -814,7 +814,8 @@ namespace OMC
         // global
 
         DefParameter(FX_TYPE, cat, "FX Type", MAX_FX_SLOTS)
-        ->DefMinMaxStandard_Uint((uint)FX_TYPE::NONE, (uint)FX_TYPE::__ELEMENT_COUNTER_DO_NOT_MOVE, (uint)FX_TYPE::NONE);
+        ->DefMinMaxStandard_Uint((uint)FX_TYPE::NONE, (uint)FX_TYPE::__ELEMENT_COUNTER_DO_NOT_MOVE, (uint)FX_TYPE::NONE)
+        ->DefUOM(MP_UOM::FX_TYPE);
 
 
         // reverb
@@ -1958,6 +1959,18 @@ namespace OMC
                 return NONE;
         }
     }
+
+// #######################
+// #
+// # ######## ##      ## 
+// # ##        ##    ##  
+// # ##         ##  ##   
+// # ######      ####    
+// # ##         ##  ##   
+// # ##        ##    ##  
+// # ##       ##      ## 
+// #
+// #######################
 
     void Config::DefineFxParameters()
     {

@@ -8,12 +8,22 @@ namespace OMC
 class PageEffects: public Page {
 
     private:
-        
+
         uint selectedFx = 0;
         uint selectedFxBefore = 0;
 
         uint banking = 0;
         uint bankingBefore = 0;
+
+        vector<MP_CAT> filter_cat_fx = {
+            MP_CAT::FX_PARAMETER_REVERB,
+            MP_CAT::FX_PARAMETER_CHORUS,
+            MP_CAT::FX_PARAMETER_DELAY,
+            MP_CAT::FX_PARAMETER_TRANSIENTSHAPER,
+            MP_CAT::FX_PARAMETER_OVERDRIVE,
+            MP_CAT::FX_PARAMETER_MULTIBANDCOMPRESOR,
+            MP_CAT::FX_PARAMETER_DYNAMICEQ
+        };
 
         bool HasFx(uint slot)
         {
@@ -52,30 +62,28 @@ class PageEffects: public Page {
         {
             if (surface_element_id == SurfaceElementId::DISPLAY_ENCODER_1)
             {
-                // TODO: Effects via OSC
+                // ENCODER 1 -> select new FX
+                // calculate new FX-Type based on current FX-Type and encoder turn amount
+                enum FX_TYPE newFxType = (enum FX_TYPE)(config->GetUint(FX_TYPE, selectedFx) + amount);
+                if (newFxType < FX_TYPE::NONE)
+                {
+                    newFxType = (enum FX_TYPE)((int)FX_TYPE::__ELEMENT_COUNTER_DO_NOT_MOVE - 1);
+                }
+                else if (newFxType >= FX_TYPE::__ELEMENT_COUNTER_DO_NOT_MOVE)
+                {
+                    newFxType = FX_TYPE::NONE;
+                }
 
-                // // ENCODER 1 -> select new FX
-                // // get the selected FX-slot
-                // FxSlot* slot = mixer->dsp->fx_slot[selectedFx];
+                // install new effect
+                config->Set(FX_TYPE, (uint)newFxType, selectedFx);
 
-                // // calculate new FX-Type based on current FX-Type and encoder turn amount
-                // FX_TYPE newFxType = (FX_TYPE)((int)slot->GetFxType() + amount);
-                // if (newFxType < FX_TYPE::NONE) {
-                //     newFxType = (FX_TYPE)((int)FX_TYPE::FX_COUNT - 1);
-                // }else if (newFxType >= FX_TYPE::FX_COUNT) {
-                //     newFxType = FX_TYPE::NONE;
-                // }
+                // reset Banking
+                banking = 0;
+                bankingBefore = 0;
 
-                // // install new effect
-                // mixer->dsp->DSP2_SetFx(selectedFx, newFxType, 2);
-
-                // // reset Banking
-                // banking = 0;
-                // bankingBefore = 0;
-
-                // // force update of page
-                // OnChange(true);
-                // SyncEncoderWidgets(true);
+                // force update of page
+                OnChange(true);
+                SyncEncoderWidgets(true);
             }
         }
         
@@ -104,7 +112,7 @@ class PageEffects: public Page {
             }
 
 
-            bool parameterChanged = config->HasParametersChanged(MP_CAT::FX);
+            bool parameterChanged = config->GetChangedParameterIndexes(filter_cat_fx).size() > 0;
             bool selectionChanged = selectedFx != selectedFxBefore;
             bool bankingChanged = banking != bankingBefore;
 
@@ -162,37 +170,24 @@ class PageEffects: public Page {
                     
                     if(parameterChanged || force_update)
                     {
-                        // Table
-                        if (HasFx(slotIndex)) {
-                            // FX Name
-                            lv_table_set_cell_value(objects.fxtable, 1, slotIndex * 2, config->GetParameter(FX_TYPE)->GetFormatedValue(slotIndex).c_str());
+                        // FX Name
+                        String name = HasFx(slotIndex) ? config->GetParameter(FX_TYPE)->GetFormatedValue(slotIndex) : "No FX";
+                        lv_table_set_cell_value(objects.fxtable, 1, slotIndex * 2, name.c_str());
 
-                            // FX Parameters
-                            if (ParameterCount(slotIndex) == 0) {
-                                // clear name and parameters
-                                for (uint8_t p = 0; p < 12; p++){
-                                    lv_table_set_cell_value(objects.fxtable, p + 2, (slotIndex * 2), "");
-                                    lv_table_set_cell_value(objects.fxtable, p + 2, (slotIndex * 2) + 1, "");
-                                }
-                            }else{
-                                for (uint8_t p = 0; p < ParameterCount(slotIndex); p++)
-                                {
-                                    MP_ID parameter_id = config->GetFxParameterFromType((enum FX_TYPE)config->GetUint(FX_TYPE, slotIndex), p);
-                                    Mixerparameter *parameter = config->GetParameter(parameter_id);
-                                    lv_table_set_cell_value(objects.fxtable, p + 3, (slotIndex * 2), parameter->GetName().c_str());
-                                    lv_table_set_cell_value(objects.fxtable, p + 3, (slotIndex * 2) + 1, parameter->GetFormatedValue(slotIndex).c_str());
-                                }
-                            }
-                        } else {
-                            // FX Name
-                            lv_table_set_cell_value(objects.fxtable, 1, slotIndex * 2, "No FX");
-
-                            // clear name and parameters
-                            for (uint8_t p = 0; p < 12; p++){
-                                lv_table_set_cell_value(objects.fxtable, p + 2, (slotIndex * 2), "");
-                                lv_table_set_cell_value(objects.fxtable, p + 2, (slotIndex * 2) + 1, "");
-                            }
-                        }   
+                        // FX Parameters
+                        uint8_t p = 0;
+                        for (; p < ParameterCount(slotIndex); p++)
+                        {
+                            MP_ID parameter_id = config->GetFxParameterFromType((enum FX_TYPE)config->GetUint(FX_TYPE, slotIndex), p);
+                            Mixerparameter *parameter = config->GetParameter(parameter_id);
+                            lv_table_set_cell_value(objects.fxtable, p + 3, (slotIndex * 2), parameter->GetName().c_str());
+                            lv_table_set_cell_value(objects.fxtable, p + 3, (slotIndex * 2) + 1, parameter->GetFormatedValue(slotIndex).c_str());
+                        }
+                        // clear parameters until row 100
+                        for (; p < 100; p++){
+                            lv_table_set_cell_value(objects.fxtable, p + 2, (slotIndex * 2), "");
+                            lv_table_set_cell_value(objects.fxtable, p + 2, (slotIndex * 2) + 1, "");
+                        }
                     }
                 }
 
@@ -206,10 +201,6 @@ class PageEffects: public Page {
             if (HasFx(selectedFx) && (ParameterCount(selectedFx) > ((banking + 1) * 5)))
             {
                 banking++;
-            }
-            else
-            {
-                banking = 0;
             }
         }
 
