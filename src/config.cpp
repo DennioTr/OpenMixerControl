@@ -198,6 +198,7 @@ namespace OMC
         {
             MP_ID parameter_id = entries.at(i).MixerparameterId;   
             
+            // old or malformed entry in scene file (ID is bigger then highest known ID)
             if (parameter_id >= MP_ID::__ELEMENT_COUNTER_DO_NOT_MOVE)
             {
                 continue;
