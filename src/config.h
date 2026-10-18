@@ -178,7 +178,6 @@ namespace OMC
     {
         public:
             MP_ID MixerparameterId;
-            String MixerparameterName;
             vector<float> value;
             vector<String> string_value;
     };

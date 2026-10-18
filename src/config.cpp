@@ -196,7 +196,13 @@ namespace OMC
         helper->Log("Load %d Mixerparameters...", entries.size());
         for (uint i=0; i < entries.size(); i++)
         {
-            MP_ID parameter_id = entries.at(i).MixerparameterId;    
+            MP_ID parameter_id = entries.at(i).MixerparameterId;   
+            
+            if (parameter_id >= MP_ID::__ELEMENT_COUNTER_DO_NOT_MOVE)
+            {
+                continue;
+            }
+
             Mixerparameter* parameter = GetParameter(parameter_id);
 
             uint entrysize = 0;
@@ -254,8 +260,6 @@ namespace OMC
 
             X32ConfigFileEntry* entry = new X32ConfigFileEntry();
             entry->MixerparameterId = (MP_ID)i;
-            //entry->key = parameter->GetConfigEntry().c_str();
-            entry->MixerparameterName = parameter->GetName();
 
             switch(parameter->GetType())
             {
@@ -270,7 +274,6 @@ namespace OMC
         }
 
         std::string json;
-        //auto error = glz::write<glz::opts{.prettify = true}>(entries, json);
         auto error = glz::write_json(entries, json);
         if (error) {
         std::string error_msg = glz::format_error(error, json);
